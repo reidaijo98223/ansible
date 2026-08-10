@@ -1,0 +1,93 @@
+---
+- name: Deploy and Execute Linux Middleware Automated Installation Utility via Nexus
+  hosts: middleware_servers
+  become: yes
+  any_errors_fatal: true
+  gather_facts: yes
+
+  vars:
+    # --- Nexus Configuration Matrix ---
+    nexus_base_url: "https://company.internal"
+    
+    # --- Keeper Vault Reference Mapping ---
+    # Replace with the actual Record UID from your Keeper Security Vault
+    keeper_nexus_record_uid: "A1b2C3d4E5f6G7h8I9j0K1"
+
+    # Fetch secrets dynamically using the Keeper Lookup Plugin
+    nexus_user: "{{ lookup('keepersecurity.keeper_secrets_manager.keeper', keeper_nexus_record_uid, field='login') }}"
+    nexus_password: "{{ lookup('keepersecurity.keeper_secrets_manager.keeper', keeper_nexus_record_uid, field='password') }}"
+
+    # --- Targeted Deployment Component Versions ---
+    tomcat_version: "10.1.34"
+    java_version: "21.0.11"
+    java_build: "9"
+    httpd_version: "2.4.67"
+
+    # --- Constructed Local Staging Paths ---
+    script_src_path: "./middleware_tomcat_java_http_installer.py"
+    script_dest_path: "/tmp/middleware_tomcat_java_http_installer.py"
+    python_interpreter: "python3"
+
+  tasks:
+    - name: Ensure target host has Python 3 installed
+      ansible.builtin.package:
+        name: python3
+        state: present
+
+    - name: Pull pinned OpenJDK archive from Nexus Repository
+      ansible.builtin.get_url:
+        url: "{{ nexus_base_url }}/openjdk/OpenJDK21U-jdk_x64_linux_hotspot_{{ java_version }}_{{ java_build }}.tar.gz"
+        dest: "/tmp/OpenJDK21U-jdk_x64_linux_hotspot_{{ java_version }}_{{ java_build }}.tar.gz"
+        username: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        force_basic_auth: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Pull pinned Apache HTTPD source archive from Nexus Repository
+      ansible.builtin.get_url:
+        url: "{{ nexus_base_url }}/httpd/httpd-{{ httpd_version }}.tar.gz"
+        dest: "/tmp/httpd-{{ httpd_version }}.tar.gz"
+        username: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        force_basic_auth: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Pull targeted Apache Tomcat binary package from Nexus Repository
+      ansible.builtin.get_url:
+        url: "{{ nexus_base_url }}/tomcat/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        username: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        force_basic_auth: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Stage the automation utility onto target host
+      ansible.builtin.copy:
+        src: "{{ script_src_path }}"
+        dest: "{{ script_dest_path }}"
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Execute the middleware installer utility
+      ansible.builtin.command:
+        cmd: "{{ python_interpreter }} {{ script_dest_path }}"
+      register: installer_output
+      changed_when: "'[+]' in installer_output.stdout"
+      failed_when: 
+        - installer_output.rc != 0 or '[-] Execution failure' in installer_output.stdout
+
+    - name: Display installation summary metrics
+      ansible.builtin.debug:
+        var: installer_output.stdout_lines
+
+    - name: Secure cleanup of the staged installer utility
+      ansible.builtin.file:
+        path: "{{ script_dest_path }}"
+        state: absent
