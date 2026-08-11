@@ -1,0 +1,14 @@
+---
+
+- name: Genereate the 3rdPtySoftwareInventory Report
+  hosts: all
+  become: yes
+#  collections:
+#    - keepersecurity.keeper_secrets_manager
+  vars:
+    ansible_command_timeout: 1200 # set timeout to 20 seconds
+    outputpath: /tmp/3rdPtySoftwareInventoryReport.csv
+#  vars_files:
+#    - main.yml
+  roles:
+     - 3rdPtySoftwareInventoryReport

@@ -1,0 +1,124 @@
+---
+
+## Refer to the check-3rdPtySoftwareInventory.sh script for column details
+
+#SERVER_NAME,SERVER_ALIAS,OS_VERSION,OS_PATCH_VERSION,OS_PATCH_STATUS,OS_LAST_PATCHED,VM_CPU_COUNT,VM_CORES_COUNT,VM_MEMORY_TOTAL_GB,STUNNEL_CONFIG,QUALYS_AGENT,ANT,MAVEN,NODE,FILEBEAT,FIREEYE,GIT,GITLFS,GRAFANA,HEARTBEAT,KONG_NGINX,METRICBEAT,POSTGRES,PYTHON_VERSION_1,PYTHON_VERSION_2,REDIS,SOLR,ACTIVE_JAVA_APPS,INSTALLED_JAVA,APP_JAVA_VERSION,JAVA-8_SYMLINK_VERSION,JAVA-11_SYMLINK_VERSION,JAVA-17_SYMLINK_VERSION,JAVA-21_SYMLINK_VERSION,ACTIVE_TOMCAT_APPS,INSTALLED_TOMCAT,APP_TOMCAT_VERSION,TOMCAT-8_SYMLINK_VERSION,TOMCAT-9_SYMLINK_VERSION,TOMCAT-10_SYMLINK_VERSION,TOMCAT-11_SYMLINK_VERSION,ACTIVE_APACHE_APPS,INSTALLED_APACHE,APACHE_SYMLINK_VERSION,APACHE-2_SYMLINK_VERSION
+
+##
+
+    - name: Run the shell script
+      become: yes
+      script: check-3rdPtySoftwareInventory.sh "{{ inventory_hostname }}"
+      register: result
+    - debug: var=result.stdout_lines
+ 
+    - name: Save result line to a file "{{ outputpath }}"
+      lineinfile:
+        path: "{{ outputpath }}"
+        line: "{{ result.stdout_lines }}"
+        create: yes
+        mode: 0755
+      delegate_to: g20-ansible-cxp.chq.ei
+
+    - name: Append header to the file "{{ outputpath }}"
+      command: sed -i '1iSERVER_NAME,SERVER_ALIAS,OS_VERSION,OS_PATCH_VERSION,OS_PATCH_STATUS,OS_LAST_PATCHED,VM_CPU_COUNT,VM_CORES_COUNT,VM_MEMORY_TOTAL_GB,STUNNEL_CONFIG,QUALYS_AGENT,ANT,MAVEN,NODE,FILEBEAT,FIREEYE,GIT,GITLFS,GRAFANA,HEARTBEAT,KONG_NGINX,METRICBEAT,POSTGRES,PYTHON_VERSION_1,PYTHON_VERSION_2,REDIS,SOLR,ACTIVE_JAVA_APPS,INSTALLED_JAVA,APP_JAVA_VERSION,JAVA-8_SYMLINK_VERSION,JAVA-11_SYMLINK_VERSION,JAVA-17_SYMLINK_VERSION,JAVA-21_SYMLINK_VERSION,ACTIVE_TOMCAT_APPS,INSTALLED_TOMCAT,APP_TOMCAT_VERSION,TOMCAT-8_SYMLINK_VERSION,TOMCAT-9_SYMLINK_VERSION,TOMCAT-10_SYMLINK_VERSION,TOMCAT-11_SYMLINK_VERSION,ACTIVE_APACHE_APPS,INSTALLED_APACHE,APACHE_SYMLINK_VERSION,APACHE-2_SYMLINK_VERSION' "{{ outputpath }}"
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
+
+    - name: Format csv file "{{ outputpath }}"
+      ansible.builtin.shell: |
+        sed -i -e "s/\[//g;s/\]//g;s/'//g" "{{ outputpath }}" # remove "[]" & "'"globally
+        sed -i -e "s/^[ ,]*//" "{{ outputpath }}" # remove blank space followed by a comma at the beginning of each line
+        sed -i -e "s/.jar//g;s/solr-core-//g;s/ platfor+/ platformapi/g;s/ booking+/ bookingapi/g;s/ svc-exp+/ svc-exponowsolr1/g;s/ quoteco+/ quoteconsumer/g;s/ address+/ addressbook/g;s/ globalh+/ globalhelp/g;s/ gqlrout+/ gqlrouterint/g;s/ queryser/ queryserv/g;s/ imageser/ imageserv/g;s/ mobileap/ mobileapi/g;s/ histwor+/ histworker/g;s/ offboar+/ offboardingapi/g;s/ gateway+/ gatewayapi/g;s/ manageb+/ managebookingapi/g;s/ viewboo+/ viewbookingapi/g;s/ jvm//g;s/ web//g;s/ opt//g" "{{ outputpath }}"
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
+
+##    - include_vars:
+##        file: "defaults/secrets.yml"
+##      no_log: True
+ 
+#    - name: Copy Password
+##      command:
+##        keeper secrets-manager get {{ keeper_record_uid }} --field password --keeper_config_file {{ keeper_config_file }}
+##      register: passwd
+
+##    - name: Set password variable
+##      set_fact:
+##        keeper_password: "{{ keeper_password_results.stdout }}"
+
+##    - name: Show retrieved password
+##      debug:
+##       msg: "Password retrieved from Keeper: {{ keeper_password }}"
+##      keepersecurity.keeper_secrets_manager.keeper_get:
+##        notation: "5xUnvdGaQnhJtlL-oeH-Fg/field/password"
+##      register: passwd
+#      keepersecurity.keeper_secrets_manager.keeper_copy:
+#       uid: 5xUnvdGaQnhJtlL-oeH-Fg
+#       field: password
+#       dest: /tmp/3ps-passwd
+#       mode: "0600"
+#      register: passwd
+#      vars:
+#        keeper_config_file: /root/keeper/client-config.json
+
+##    - name: export ANSIBLE_VAULT_USERNAME_FILE
+##      ansible.builtin.shell: export ANSIBLE_VAULT_USERNAME_FILE=/home/chq-reinog/3rdPtySoftwareInventory/nexus_password
+##      delegate_to: g20-ansible-cxp.chq.ei
+##      run_once: true
+
+##    - name: Delete file from Nexus
+##      uri:
+##        url: "{{ nexus_url }}/{{ nexus_repository }}/{{ artifact_path }}/{{ artifact_file }}"
+##        method: DELETE
+##        user: "{{ nexus_user }}"
+##        password: "{{ nexus_password }}"
+##        force_basic_auth: yes
+##        status_code: 200
+
+##    - name: Upload file to Nexus
+##      uri:
+##       url: "{{ nexus_url }}/{{ nexus_repository }}/{{ artifact_path }}"
+##       method: PUT
+##       src: "{{ local_file_path }}"
+##       user: "{{ nexus_user }}"
+##       password: "{{ nexus_password }}"
+##       force_basic_auth: yes
+##       status_code: 200
+
+    - name: Delete old 3rdPtySoftwareInventoryReport in Azure NEXUS
+      ansible.builtin.shell: curl -v -u "{{ nexus_user }}":"{{ nexus_password }}" --request DELETE https://nexus.expeditors.com:8443/nexus/repository/thirdparty/3PS/3rdPtySoftwareInventoryReport.csv
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
+
+#    - name: Delete old 3rdPtySoftwareInventoryReport in Azure NEXUS
+#      command: curl -v --user "{{ nexus_user }}":"{{ passwd }}" --request DELETE https://nexus.expeditors.com:8443/nexus/repository/thirdparty/3PS/3rdPtySoftwareInventoryReport.csv
+#      delegate_to: g20-ansible-cxp.chq.ei
+#      run_once: true
+
+     - name: Push CVS file to Azure NEXUS without timestamp
+      ansible.builtin.shell: curl -v -u "{{ nexus_user }}":"{{ nexus_password }}" --upload-file "/tmp/3rdPtySoftwareInventoryReport.csv" https://nexus.expeditors.com:8443/nexus/repository/thirdparty/3PS/
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
+
+#    - name: Push CVS file to Azure NEXUS without timestamp
+#      command: curl -v -u "{{ nexus_user }}":"{{ passwd }}" --upload-file "/tmp/3rdPtySoftwareInventoryReport.csv" https://nexus.expeditors.com:8443/nexus/repository/thirdparty/3PS/
+#      delegate_to: g20-ansible-cxp.chq.ei
+#      run_once: true
+
+     - name: Rename csv file
+      shell: mv "{{ outputpath }}" /tmp/3rdPtySoftwareInventoryReport_{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
+ 
+    - name: Send report "{{ outputpath }}" to the "{{ mail_id }}"
+      mail:
+        host: exch-smtp.expeditors.com
+        port: 25
+        subject: EXP.O NOW Third-party Software Inventory Report
+        body: Hello, Attached is the Third-party Software Inventory Report per your request. Enjoy!
+        from: g20-ansible-cxp.awx@expeditors.com
+##        to: "reino.garcia@expeditors.com"
+        to: "{{ mail_id }}"
+        attach: "/tmp/3rdPtySoftwareInventoryReport_{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv"
+      delegate_to: g20-ansible-cxp.chq.ei
+      run_once: true
