@@ -50,10 +50,10 @@
 ##      debug:
 ##       msg: "Password retrieved from Keeper: {{ keeper_password }}"
 ##      keepersecurity.keeper_secrets_manager.keeper_get:
-##        notation: "5xUnvdGaQnhJtlL/field/password"
+##        notation: "5xUnvdGaQnhJt/field/password"
 ##      register: passwd
 #      keepersecurity.keeper_secrets_manager.keeper_copy:
-#       uid: 5xUnvdGaQnhJtlL
+#       uid: 5xUnvdGaQnhJt
 #       field: password
 #       dest: /tmp/3ps-passwd
 #       mode: "0600"
