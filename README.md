@@ -4,7 +4,7 @@
 
 This Ansible playbook provides automated orchestrations to provision OpenJDK, Apache HTTP Server, and Apache Tomcat. It combines secure, zero-hardcode credential harvesting with private repository artifact delivery.
 
-## ⚙️ Secure Automation Pipeline
+## Secure Automation Pipeline
 
 ```text
 [Ansible Control Node Execution]
@@ -34,13 +34,13 @@ This Ansible playbook provides automated orchestrations to provision OpenJDK, Ap
 [Sanitize Staging Filesystem] ──► Purge /tmp workspace elements ──► [Done]
 ```
 
-## 🚀 Key Features
+## Key Features
 
 * **Zero-Trust Vault Management:** Leverages the official `keepersecurity.keeper_secrets_manager` lookup engine plugin. Credentials exist solely within temporary process memory during execution and are never saved to disk, written to task blocks, or leaked in Git commits.
 * **Private Warehouse Sourcing:** Routes artifact retrievals exclusively through your internal corporate Nexus Repository Manager, ensuring network containment without public internet dependencies.
 * **Atomic Workspace Cleaning:** Automatically deletes the execution utility from the remote target server's `/tmp` folder right after the installation completes, keeping the target clean.
 
-## 📋 Prerequisites & Setup
+## Prerequisites & Setup
 
 ### 1. Control Node Core Packages
 The execution engine requires the specialized Keeper integration library dependencies:
@@ -55,7 +55,7 @@ Ensure your local system profile exports your authenticated Keeper client integr
 export KSM_CONFIG="Base64EncodedConfigTokenStringHere=="
 ```
 
-## 🛠️ Deployment Instructions
+## Deployment Instructions
 
 1. Map your specific targets inside your local Ansible inventory tracking configurations.
 2. Update the `keeper_nexus_record_uid` variable inside the playbook with the corresponding alphanumeric Record UID from your Keeper Security Vault.
@@ -70,7 +70,7 @@ ansible-playbook -i inventories/prod_hosts deploy_middleware.yml
 
 An automated Ansible solution that inventories third-party software, operating system specs, and configuration states across all infrastructure nodes. It compiles the metrics into a formatted CSV report, publishes the asset to an Azure-hosted Sonatype Nexus repository, and emails the final deliverable to designated stakeholders.
 
-## 🚀 Workflow Overview
+## Workflow Overview
 
 ```text
 [Ansible Control Node Execution]
@@ -106,7 +106,7 @@ An automated Ansible solution that inventories third-party software, operating s
 [Dispatch Email Reports] ──► Route CSV attachments to mail_id via SMTP Relay ──► [Done]
 ```
 
-## 🛠️ Components
+## Components
 
 ### 1. Ansible Playbook (`site.yml`)
 Initializes the execution environment across all hosts, sets a critical 20-minute execution timeout threshold (`ansible_command_timeout: 1200`), and maps targeted infrastructure to the dedicated reporting role.
@@ -125,7 +125,7 @@ Orchestrates the lifecycle of the compiled data on the delegated control node (`
 * **Artifact Publishing:** Communicates with Azure Nexus using `curl` API methods to sequentially delete expired inventory assets and push live, updated artifacts.
 * **Notification Deliverables:** Applies date-hour timestamps to the physical reporting files and passes the file to an SMTP relay (`://abc.com`) for email distribution.
 
-## 📋 CSV Inventory Schema Reference
+## CSV Inventory Schema Reference
 
 The script aggregates data strictly mapping to the following tabular layout:
 
