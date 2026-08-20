@@ -18,19 +18,19 @@
         line: "{{ result.stdout_lines }}"
         create: yes
         mode: 0755
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
 
     - name: Append header to the file "{{ outputpath }}"
       command: sed -i '1iSERVER_NAME,SERVER_ALIAS,OS_VERSION,OS_PATCH_VERSION,OS_PATCH_STATUS,OS_LAST_PATCHED,VM_CPU_COUNT,VM_CORES_COUNT,VM_MEMORY_TOTAL_GB,STUNNEL_CONFIG,QUALYS_AGENT,ANT,MAVEN,NODE,FILEBEAT,FIREEYE,GIT,GITLFS,GRAFANA,HEARTBEAT,KONG_NGINX,METRICBEAT,POSTGRES,PYTHON_VERSION_1,PYTHON_VERSION_2,REDIS,SOLR,ACTIVE_JAVA_APPS,INSTALLED_JAVA,APP_JAVA_VERSION,JAVA-8_SYMLINK_VERSION,JAVA-11_SYMLINK_VERSION,JAVA-17_SYMLINK_VERSION,JAVA-21_SYMLINK_VERSION,ACTIVE_TOMCAT_APPS,INSTALLED_TOMCAT,APP_TOMCAT_VERSION,TOMCAT-8_SYMLINK_VERSION,TOMCAT-9_SYMLINK_VERSION,TOMCAT-10_SYMLINK_VERSION,TOMCAT-11_SYMLINK_VERSION,ACTIVE_APACHE_APPS,INSTALLED_APACHE,APACHE_SYMLINK_VERSION,APACHE-2_SYMLINK_VERSION' "{{ outputpath }}"
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
 
     - name: Format csv file "{{ outputpath }}"
       ansible.builtin.shell: |
         sed -i -e "s/\[//g;s/\]//g;s/'//g" "{{ outputpath }}" # remove "[]" & "'"globally
         sed -i -e "s/^[ ,]*//" "{{ outputpath }}" # remove blank space followed by a comma at the beginning of each line
-        sed -i -e "s/.jar//g;s/solr-core-//g;s/ platfor+/ platformapi/g;s/ booking+/ bookingapi/g;s/ svc-exp+/ svc-exponowsolr1/g;s/ quoteco+/ quoteconsumer/g;s/ address+/ addressbook/g;s/ globalh+/ globalhelp/g;s/ gqlrout+/ gqlrouterint/g;s/ queryser/ queryserv/g;s/ imageser/ imageserv/g;s/ mobileap/ mobileapi/g;s/ histwor+/ histworker/g;s/ offboar+/ offboardingapi/g;s/ gateway+/ gatewayapi/g;s/ manageb+/ managebookingapi/g;s/ viewboo+/ viewbookingapi/g;s/ jvm//g;s/ web//g;s/ opt//g" "{{ outputpath }}"
-      delegate_to: rg90-ansible-cxp.abc.rg
+        sed -i -e "s/.jar//g;s/solr-core-//g;s/ platefr+/ platefrmapi/g;s/ bking+/ bkingapi/g;s/ svc-exp+/ svc-expnwslr1/g;s/ quotesco+/ quotesconsmer/g;s/ addrs+/ addrsbk/g;s/ globalh+/ glbalhlp/g;s/ gqlrt+/ gqlrtrint/g;s/ qurysr/ qurysrv/g;s/ imgesr/ imgesrv/g;s/ mbileap/ mbileapi/g;s/ hstwr+/ hstwrkr/g;s/ offbr+/ offbrdingapi/g;s/ gtway+/ gtwayapi/g;s/ mangb+/ mangebkingapi/g;s/ vwbk+/ vwbkingapi/g;s/ jvm//g;s/ web//g;s/ opt//g" "{{ outputpath }}"
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
 
 ##    - include_vars:
@@ -63,7 +63,7 @@
 
 ##    - name: export ANSIBLE_VAULT_USERNAME_FILE
 ##      ansible.builtin.shell: export ANSIBLE_VAULT_USERNAME_FILE=/home/chq-reinog/3rdPtySoftwareInventory/nexus_password
-##      delegate_to: rg90-ansible-cxp.abc.rg
+##      delegate_to: rg90-ansible.abc.rg
 ##      run_once: true
 
 ##    - name: Delete file from Nexus
@@ -87,27 +87,27 @@
 
     - name: Delete old 3rdPtySoftwareInventoryReport in Azure NEXUS
       ansible.builtin.shell: curl -v -u "{{ nexus_user }}":"{{ nexus_password }}" --request DELETE https://nexus-rg.abc.com:8443/nexus/repository/thirdparty/3PS/3rdPtySoftwareInventoryReport.csv
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
 
 #    - name: Delete old 3rdPtySoftwareInventoryReport in Azure NEXUS
 #      command: curl -v --user "{{ nexus_user }}":"{{ passwd }}" --request DELETE https://nexus-rg.abc.com:8443/nexus/repository/thirdparty/3PS/3rdPtySoftwareInventoryReport.csv
-#      delegate_to: rg90-ansible-cxp.abc.rg
+#      delegate_to: rg90-ansible.abc.rg
 #      run_once: true
 
      - name: Push CVS file to Azure NEXUS without timestamp
       ansible.builtin.shell: curl -v -u "{{ nexus_user }}":"{{ nexus_password }}" --upload-file "/tmp/3rdPtySoftwareInventoryReport.csv" https://nexus-rg.abc.com:8443/nexus/repository/thirdparty/3PS/
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
 
 #    - name: Push CVS file to Azure NEXUS without timestamp
 #      command: curl -v -u "{{ nexus_user }}":"{{ passwd }}" --upload-file "/tmp/3rdPtySoftwareInventoryReport.csv" https://nexus-rg.abc.com:8443/nexus/repository/thirdparty/3PS/
-#      delegate_to: rg90-ansible-cxp.abc.rg
+#      delegate_to: rg90-ansible.abc.rg
 #      run_once: true
 
      - name: Rename csv file
       shell: mv "{{ outputpath }}" /tmp/3rdPtySoftwareInventoryReport_{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
  
     - name: Send report "{{ outputpath }}" to the "{{ mail_id }}"
@@ -116,9 +116,9 @@
         port: 25
         subject: Third-party Software Inventory Report
         body: Hello, Attached is the Third-party Software Inventory Report per your request. Enjoy!
-        from: rg90-ansible-cxp.awx@abc.com
+        from: rg90-ansible.awx@abc.com
 ##        to: "reino.garcia@gmail.com"
         to: "{{ mail_id }}"
         attach: "/tmp/3rdPtySoftwareInventoryReport_{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv"
-      delegate_to: rg90-ansible-cxp.abc.rg
+      delegate_to: rg90-ansible.abc.rg
       run_once: true
